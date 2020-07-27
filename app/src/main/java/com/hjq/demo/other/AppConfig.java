@@ -39,9 +39,9 @@ public final class AppConfig {
     }
 
     /**
-     * 获取当前应用的渠道名
+     * 获取 BuglyId
      */
-    public static String getProductFlavors() {
-        return BuildConfig.FLAVOR;
+    public static String getBuglyId() {
+        return BuildConfig.BUGLY_ID;
     }
 }

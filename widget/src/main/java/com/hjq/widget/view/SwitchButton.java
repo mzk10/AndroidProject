@@ -10,7 +10,6 @@ import android.graphics.Path;
 import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader;
-import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
@@ -20,7 +19,6 @@ import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
 import com.hjq.widget.R;
 
@@ -28,7 +26,7 @@ import com.hjq.widget.R;
  *    author : Android 轮子哥
  *    github : https://github.com/getActivity/AndroidProject
  *    time   : 2019/02/20
- *    desc   : 开关按钮
+ *    desc   : 高仿 ios 开关按钮
  */
 public final class SwitchButton extends View {
 
@@ -90,30 +88,23 @@ public final class SwitchButton extends View {
     private float mShadowReservedHeight;
 
     public SwitchButton(Context context) {
-        super(context);
-        initialize(null);
+        this(context, null);
     }
 
     public SwitchButton(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        initialize(attrs);
+        this(context, attrs, 0);
     }
 
     public SwitchButton(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initialize(attrs);
+        this(context, attrs, defStyleAttr, 0);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public SwitchButton(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        initialize(attrs);
-    }
 
-    private void initialize(AttributeSet attrs) {
         setLayerType(LAYER_TYPE_SOFTWARE, null);
 
-        TypedArray array = getContext().obtainStyledAttributes(attrs, R.styleable.SwitchButton);
+        TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.SwitchButton);
         mChecked = array.getBoolean(R.styleable.SwitchButton_android_checked, mChecked);
         setEnabled(array.getBoolean(R.styleable.SwitchButton_android_enabled, isEnabled()));
         mLastCheckedState = mCheckedState = mChecked ? STATE_SWITCH_ON : STATE_SWITCH_OFF;
@@ -130,7 +121,6 @@ public final class SwitchButton extends View {
                         + getPaddingLeft() + getPaddingRight()), MeasureSpec.EXACTLY);
                 break;
             case MeasureSpec.EXACTLY:
-                break;
             default:
                 break;
         }
@@ -141,7 +131,6 @@ public final class SwitchButton extends View {
                         + getPaddingTop() + getPaddingBottom(), MeasureSpec.EXACTLY);
                 break;
             case MeasureSpec.EXACTLY:
-                break;
             default:
                 break;
         }
@@ -149,12 +138,12 @@ public final class SwitchButton extends View {
     }
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        isCanVisibleDrawing = w > getPaddingLeft() + getPaddingRight() && h > getPaddingTop() + getPaddingBottom();
+    protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
+        isCanVisibleDrawing = width > getPaddingLeft() + getPaddingRight() && height > getPaddingTop() + getPaddingBottom();
 
         if (isCanVisibleDrawing) {
-            int actuallyDrawingAreaWidth = w - getPaddingLeft() - getPaddingRight();
-            int actuallyDrawingAreaHeight = h - getPaddingTop() - getPaddingBottom();
+            int actuallyDrawingAreaWidth = width - getPaddingLeft() - getPaddingRight();
+            int actuallyDrawingAreaHeight = height - getPaddingTop() - getPaddingBottom();
 
             int actuallyDrawingAreaLeft;
             int actuallyDrawingAreaRight;
@@ -162,7 +151,7 @@ public final class SwitchButton extends View {
             int actuallyDrawingAreaBottom;
             if (actuallyDrawingAreaWidth * mAspectRatio < actuallyDrawingAreaHeight) {
                 actuallyDrawingAreaLeft = getPaddingLeft();
-                actuallyDrawingAreaRight = w - getPaddingRight();
+                actuallyDrawingAreaRight = width - getPaddingRight();
                 int heightExtraSize = (int) (actuallyDrawingAreaHeight - actuallyDrawingAreaWidth * mAspectRatio);
                 actuallyDrawingAreaTop = getPaddingTop() + heightExtraSize / 2;
                 actuallyDrawingAreaBottom = getHeight() - getPaddingBottom() - heightExtraSize / 2;
@@ -367,8 +356,6 @@ public final class SwitchButton extends View {
                 && (mAnim1 * mAnim2 == 0)) {
 
             switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    break;
                 case MotionEvent.ACTION_UP:
                     mLastCheckedState = mCheckedState;
                     mAnim2 = 1;
@@ -390,6 +377,7 @@ public final class SwitchButton extends View {
                             break;
                     }
                     break;
+                case MotionEvent.ACTION_DOWN:
                 default:
                     break;
             }

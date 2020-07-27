@@ -1,22 +1,22 @@
 package com.hjq.demo.ui.dialog;
 
 import android.content.Context;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
-import androidx.fragment.app.FragmentActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.hjq.base.BaseAdapter;
 import com.hjq.base.BaseDialog;
-import com.hjq.base.BaseRecyclerViewAdapter;
 import com.hjq.demo.R;
-import com.hjq.demo.common.MyDialogFragment;
-import com.hjq.demo.common.MyRecyclerViewAdapter;
+import com.hjq.demo.aop.SingleClick;
+import com.hjq.demo.common.MyAdapter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,31 +31,30 @@ import java.util.List;
 public final class MenuDialog {
 
     public static final class Builder
-            extends MyDialogFragment.Builder<Builder>
-            implements View.OnClickListener,
-            BaseRecyclerViewAdapter.OnItemClickListener {
+            extends BaseDialog.Builder<Builder>
+            implements BaseAdapter.OnItemClickListener,
+            View.OnLayoutChangeListener, Runnable {
 
         private OnListener mListener;
         private boolean mAutoDismiss = true;
 
         private final RecyclerView mRecyclerView;
-        private final MenuAdapter mAdapter;
         private final TextView mCancelView;
 
-        public Builder(FragmentActivity activity) {
-            super(activity);
-            setContentView(R.layout.dialog_menu);
-            setAnimStyle(BaseDialog.AnimStyle.BOTTOM);
+        private final MenuAdapter mAdapter;
+
+        public Builder(Context context) {
+            super(context);
+            setContentView(R.layout.menu_dialog);
+            setAnimStyle(BaseDialog.ANIM_BOTTOM);
 
             mRecyclerView = findViewById(R.id.rv_menu_list);
             mCancelView  = findViewById(R.id.tv_menu_cancel);
+            setOnClickListener(mCancelView);
 
-            mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
             mAdapter = new MenuAdapter(getContext());
             mAdapter.setOnItemClickListener(this);
             mRecyclerView.setAdapter(mAdapter);
-
-            mCancelView.setOnClickListener(this);
         }
 
         @Override
@@ -67,7 +66,7 @@ public final class MenuDialog {
                     // 不显示取消按钮
                     setCancel(null);
                     // 重新设置动画
-                    setAnimStyle(BaseDialog.AnimStyle.SCALE);
+                    setAnimStyle(BaseDialog.ANIM_SCALE);
                     break;
                 default:
                     break;
@@ -90,6 +89,7 @@ public final class MenuDialog {
         @SuppressWarnings("all")
         public Builder setList(List data) {
             mAdapter.setData(data);
+            mRecyclerView.addOnLayoutChangeListener(this);
             return this;
         }
 
@@ -112,9 +112,7 @@ public final class MenuDialog {
             return this;
         }
 
-        /**
-         * {@link View.OnClickListener}
-         */
+        @SingleClick
         @Override
         public void onClick(View v) {
             if (mAutoDismiss) {
@@ -129,7 +127,7 @@ public final class MenuDialog {
         }
 
         /**
-         * {@link BaseRecyclerViewAdapter.OnItemClickListener}
+         * {@link BaseAdapter.OnItemClickListener}
          */
         @SuppressWarnings("all")
         @Override
@@ -142,9 +140,46 @@ public final class MenuDialog {
                 mListener.onSelected(getDialog(), position, mAdapter.getItem(position));
             }
         }
+
+        /**
+         * {@link View.OnLayoutChangeListener}
+         */
+        @Override
+        public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+            mRecyclerView.removeOnLayoutChangeListener(this);
+            // 这里一定要加延迟，如果不加在 Android 9.0 上面会导致 setLayoutParams 无效
+            post(this);
+        }
+
+        @Override
+        public void run() {
+            final ViewGroup.LayoutParams params = mRecyclerView.getLayoutParams();
+            final int maxHeight = getScreenHeight() / 4 * 3;
+            if (mRecyclerView.getHeight() > maxHeight) {
+                if (params.height != maxHeight) {
+                    params.height = maxHeight;
+                    mRecyclerView.setLayoutParams(params);
+                }
+            } else {
+                if (params.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
+                    params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    mRecyclerView.setLayoutParams(params);
+                }
+            }
+        }
+
+        /**
+         *  获取屏幕的高度
+         */
+        private int getScreenHeight() {
+            WindowManager manager = getSystemService(WindowManager.class);
+            DisplayMetrics outMetrics = new DisplayMetrics();
+            manager.getDefaultDisplay().getMetrics(outMetrics);
+            return outMetrics.heightPixels;
+        }
     }
 
-    private static final class MenuAdapter extends MyRecyclerViewAdapter<Object> {
+    private static final class MenuAdapter extends MyAdapter<Object> {
 
         private MenuAdapter(Context context) {
             super(context);
@@ -156,15 +191,15 @@ public final class MenuDialog {
             return new ViewHolder();
         }
 
-        final class ViewHolder extends MyRecyclerViewAdapter.ViewHolder {
+        private final class ViewHolder extends MyAdapter.ViewHolder {
 
             private final TextView mTextView;
-            private final View mView;
+            private final View mLineView;
 
-            public ViewHolder() {
-                super(R.layout.item_menu);
-                mTextView = (TextView) findViewById(R.id.tv_menu_name);
-                mView = findViewById(R.id.v_menu_line);
+            ViewHolder() {
+                super(R.layout.menu_item);
+                mTextView = (TextView) findViewById(R.id.tv_menu_text);
+                mLineView = findViewById(R.id.v_menu_line);
             }
 
             @Override
@@ -174,14 +209,14 @@ public final class MenuDialog {
                 if (position == 0) {
                     // 当前是否只有一个条目
                     if (getItemCount() == 1) {
-                        mView.setVisibility(View.GONE);
+                        mLineView.setVisibility(View.GONE);
                     } else {
-                        mView.setVisibility(View.VISIBLE);
+                        mLineView.setVisibility(View.VISIBLE);
                     }
                 } else if (position == getItemCount() - 1) {
-                    mView.setVisibility(View.GONE);
+                    mLineView.setVisibility(View.GONE);
                 } else {
-                    mView.setVisibility(View.VISIBLE);
+                    mLineView.setVisibility(View.VISIBLE);
                 }
             }
         }
@@ -197,6 +232,6 @@ public final class MenuDialog {
         /**
          * 点击取消时回调
          */
-        void onCancel(BaseDialog dialog);
+        default void onCancel(BaseDialog dialog) {}
     }
 }

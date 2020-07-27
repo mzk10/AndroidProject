@@ -6,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.RectF;
-import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
@@ -16,6 +15,7 @@ import android.util.TypedValue;
 import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.hjq.demo.R;
 
@@ -54,7 +54,7 @@ public final class ProgressView extends View {
 
     /** Animation The amount of degrees per second */
     private float mSpinSpeed = 230.0f;
-    /** private float mSpinSpeed = 120.0f; */
+    // private float mSpinSpeed = 120.0f;
     /** The last time the spinner was animated */
     private long mLastTimeAnimated = 0;
 
@@ -77,7 +77,11 @@ public final class ProgressView extends View {
     }
 
     public ProgressView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+        this(context, attrs, defStyleAttr, 0);
+    }
+
+    public ProgressView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(context, attrs, defStyleAttr, defStyleRes);
 
         TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.ProgressView);
         mBarWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mBarWidth, getResources().getDisplayMetrics());
@@ -98,17 +102,7 @@ public final class ProgressView extends View {
         }
         array.recycle();
 
-        float animationValue;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            animationValue = Settings.Global.getFloat(getContext().getContentResolver(), Settings.Global.ANIMATOR_DURATION_SCALE, 1);
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                animationValue = Settings.System.getFloat(getContext().getContentResolver(), Settings.System.ANIMATOR_DURATION_SCALE, 1);
-            } else {
-                animationValue = Settings.System.getFloat(getContext().getContentResolver(), "animator_duration_scale", 1);
-            }
-        }
-
+        float animationValue = Settings.Global.getFloat(getContext().getContentResolver(), Settings.Global.ANIMATOR_DURATION_SCALE, 1);
         mShouldAnimate = animationValue != 0;
     }
 
@@ -156,10 +150,10 @@ public final class ProgressView extends View {
      * Use this dimensions to setup the bounds and paints.
      */
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
+    protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
+        super.onSizeChanged(width, height, oldWidth, oldHeight);
 
-        setupBounds(w, h);
+        setupBounds(width, height);
         setupPaints();
         invalidate();
     }

@@ -2,8 +2,10 @@ package com.hjq.widget.view;
 
 import android.content.Context;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+
 import androidx.appcompat.widget.AppCompatTextView;
 
 /**
@@ -15,21 +17,16 @@ import androidx.appcompat.widget.AppCompatTextView;
 public final class SmartTextView extends AppCompatTextView implements TextWatcher {
 
     public SmartTextView(Context context) {
-        super(context);
-        initialize();
+        this(context, null);
     }
 
     public SmartTextView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initialize();
+        this(context, attrs, android.R.attr.textViewStyle);
     }
 
     public SmartTextView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        initialize();
-    }
 
-    private void initialize() {
         addTextChangedListener(this);
         // 触发一次监听
         afterTextChanged(null);
@@ -48,7 +45,7 @@ public final class SmartTextView extends AppCompatTextView implements TextWatche
     @Override
     public void afterTextChanged(Editable s) {
         // 判断当前有没有设置文本达到自动隐藏和显示的效果
-        if ("".equals(getText().toString())) {
+        if (TextUtils.isEmpty(getText().toString())) {
             if (getVisibility() != GONE) {
                 setVisibility(GONE);
             }

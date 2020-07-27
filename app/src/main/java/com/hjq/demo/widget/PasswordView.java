@@ -51,7 +51,11 @@ public final class PasswordView extends View {
     }
 
     public PasswordView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+        this(context, attrs, defStyleAttr, 0);
+    }
+
+    public PasswordView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(context, attrs, defStyleAttr, defStyleRes);
 
         mItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mItemWidth, getResources().getDisplayMetrics());
         mItemHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mItemHeight, getResources().getDisplayMetrics());
@@ -85,7 +89,6 @@ public final class PasswordView extends View {
                 widthMeasureSpec = MeasureSpec.makeMeasureSpec(mItemWidth * PASSWORD_COUNT, MeasureSpec.EXACTLY);
                 break;
             case MeasureSpec.EXACTLY:
-                break;
             default:
                 break;
         }
@@ -96,7 +99,6 @@ public final class PasswordView extends View {
                 heightMeasureSpec = MeasureSpec.makeMeasureSpec(mItemHeight, MeasureSpec.EXACTLY);
                 break;
             case MeasureSpec.EXACTLY:
-                break;
             default:
                 break;
         }

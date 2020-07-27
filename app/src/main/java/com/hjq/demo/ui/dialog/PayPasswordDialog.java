@@ -8,15 +8,14 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
-import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.hjq.base.BaseAdapter;
 import com.hjq.base.BaseDialog;
-import com.hjq.base.BaseRecyclerViewAdapter;
 import com.hjq.demo.R;
-import com.hjq.demo.common.MyDialogFragment;
-import com.hjq.demo.common.MyRecyclerViewAdapter;
+import com.hjq.demo.aop.SingleClick;
+import com.hjq.demo.common.MyAdapter;
 import com.hjq.demo.widget.PasswordView;
 
 import java.util.Arrays;
@@ -31,9 +30,8 @@ import java.util.LinkedList;
 public final class PayPasswordDialog {
 
     public static final class Builder
-            extends MyDialogFragment.Builder<Builder>
-            implements BaseRecyclerViewAdapter.OnItemClickListener,
-            View.OnClickListener {
+            extends BaseDialog.Builder<Builder>
+            implements BaseAdapter.OnItemClickListener {
 
         /** 输入键盘文本 */
         private static final String[] KEYBOARD_TEXT = new String[]{"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", ""};
@@ -49,28 +47,22 @@ public final class PayPasswordDialog {
         private final TextView mMoneyView;
 
         private final PasswordView mPasswordView;
-
         private final RecyclerView mRecyclerView;
-
         private final KeyboardAdapter mAdapter;
 
-        public Builder(FragmentActivity activity) {
-            super(activity);
-            setContentView(R.layout.dialog_pay_password);
+        public Builder(Context context) {
+            super(context);
+            setContentView(R.layout.pay_password_dialog);
             setCancelable(false);
 
             mTitleView = findViewById(R.id.tv_pay_title);
             mCloseView = findViewById(R.id.iv_pay_close);
-
             mSubTitleView = findViewById(R.id.tv_pay_sub_title);
             mMoneyView = findViewById(R.id.tv_pay_money);
-
             mPasswordView = findViewById(R.id.pw_pay_view);
             mRecyclerView = findViewById(R.id.rv_pay_list);
+            setOnClickListener(mCloseView);
 
-            mCloseView.setOnClickListener(this);
-
-            mRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 3));
             mAdapter = new KeyboardAdapter(getContext());
             mAdapter.setData(Arrays.asList(KEYBOARD_TEXT));
             mAdapter.setOnItemClickListener(this);
@@ -115,7 +107,7 @@ public final class PayPasswordDialog {
         }
 
         /**
-         * {@link BaseRecyclerViewAdapter.OnItemClickListener}
+         * {@link BaseAdapter.OnItemClickListener}
          */
         @Override
         public void onItemClick(RecyclerView recyclerView, View itemView, int position) {
@@ -139,20 +131,18 @@ public final class PayPasswordDialog {
                     // 判断密码是否已经输入完毕
                     if (mRecordList.size() == PasswordView.PASSWORD_COUNT) {
                         if (mListener != null) {
-                            postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
+                            postDelayed(() -> {
 
-                                    if (mAutoDismiss) {
-                                        dismiss();
-                                    }
-                                    // 获取输入的支付密码
-                                    StringBuilder password = new StringBuilder();
-                                    for (String s : mRecordList) {
-                                        password.append(s);
-                                    }
-                                    mListener.onCompleted(getDialog(), password.toString());
+                                if (mAutoDismiss) {
+                                    dismiss();
                                 }
+                                // 获取输入的支付密码
+                                StringBuilder password = new StringBuilder();
+                                for (String s : mRecordList) {
+                                    password.append(s);
+                                }
+                                mListener.onCompleted(getDialog(), password.toString());
+
                             }, 300);
                         }
                     }
@@ -161,6 +151,7 @@ public final class PayPasswordDialog {
             mPasswordView.setPassWordLength(mRecordList.size());
         }
 
+        @SingleClick
         @Override
         public void onClick(View v) {
             if (v == mCloseView) {
@@ -175,7 +166,7 @@ public final class PayPasswordDialog {
         }
     }
 
-    private static final class KeyboardAdapter extends MyRecyclerViewAdapter<String> {
+    private static final class KeyboardAdapter extends MyAdapter<String> {
 
         /** 数字按钮条目 */
         private static final int TYPE_NORMAL = 0;
@@ -202,23 +193,23 @@ public final class PayPasswordDialog {
 
         @NonNull
         @Override
-        public MyRecyclerViewAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        public MyAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             switch (viewType) {
                 case TYPE_DELETE:
-                    return new MyRecyclerViewAdapter.SimpleHolder(R.layout.item_pay_password_delete);
+                    return new MyAdapter.SimpleHolder(R.layout.pay_password_delete_item);
                 case TYPE_EMPTY:
-                    return new MyRecyclerViewAdapter.SimpleHolder(R.layout.item_pay_password_empty);
+                    return new MyAdapter.SimpleHolder(R.layout.pay_password_empty_item);
                 default:
                     return new KeyboardAdapter.ViewHolder();
             }
         }
 
-        final class ViewHolder extends MyRecyclerViewAdapter.ViewHolder {
+        private final class ViewHolder extends MyAdapter.ViewHolder {
 
             private final TextView mTextView;
 
-            ViewHolder() {
-                super(R.layout.item_pay_password_normal);
+            private ViewHolder() {
+                super(R.layout.pay_password_normal_item);
                 mTextView = (TextView) getItemView();
             }
 
@@ -227,6 +218,11 @@ public final class PayPasswordDialog {
                 mTextView.setText(getItem(position));
             }
         }
+
+        @Override
+        protected RecyclerView.LayoutManager generateDefaultLayoutManager(Context context) {
+            return new GridLayoutManager(getContext(), 3);
+        }
     }
 
     public interface OnListener {
@@ -234,13 +230,13 @@ public final class PayPasswordDialog {
         /**
          * 输入完成时回调
          *
-         * @param password 六位支付密码
+         * @param password      输入的密码
          */
         void onCompleted(BaseDialog dialog, String password);
 
         /**
          * 点击取消时回调
          */
-        void onCancel(BaseDialog dialog);
+        default void onCancel(BaseDialog dialog) {}
     }
 }
